@@ -1,7 +1,6 @@
 # UESTC 健康打卡平台自动打卡脚本
 
-![Auto-report action](https://github.com/lyh543/USETC-ncov-AutoReport/workflows/Auto-report%20action/badge.svg?branch=master&event=schedule)
-![School](https://img.shields.io/badge/School-UESTC-blue.svg)
+[![Auto-report action](https://github.com/lyh543/UESTC-ncov-AutoReport/actions/workflows/report.yml/badge.svg)](https://github.com/lyh543/UESTC-ncov-AutoReport/actions/workflows/report.yml)
 ![Language](https://img.shields.io/badge/Python-3.9-yellow.svg)
 <!-- ![GitHub stars](https://img.shields.io/github/stars/lyh543/UESTC-ncov-AutoReport)
 ![GitHub forks](https://img.shields.io/github/forks/lyh543/UESTC-ncov-AutoReport) -->
