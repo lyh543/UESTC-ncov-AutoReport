@@ -1,9 +1,9 @@
 name: Auto-report action
 
 on: 
-  push:
-    branches:
-      - master
+#  push:
+#    branches:
+#      - master
   schedule:
     # 1:30 (UTC) == 9:30 (UTC+8)
     - cron: '30 1 * * *'
@@ -26,5 +26,5 @@ jobs:
       env:
         CONFIG: ${{ secrets.config }}
       run: |
-        echo CONFIG > config.json
+        echo $CONFIG > config.json
         python report.py
