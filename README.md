@@ -2,6 +2,7 @@
 
 [![Auto-report action](https://github.com/lyh543/UESTC-ncov-AutoReport/actions/workflows/report.yml/badge.svg)](https://github.com/lyh543/UESTC-ncov-AutoReport/actions/workflows/report.yml)
 ![Language](https://img.shields.io/badge/Python-3.9-yellow.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- ![GitHub stars](https://img.shields.io/github/stars/lyh543/UESTC-ncov-AutoReport)
 ![GitHub forks](https://img.shields.io/github/forks/lyh543/UESTC-ncov-AutoReport) -->
 
