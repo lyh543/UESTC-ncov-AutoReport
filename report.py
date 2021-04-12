@@ -1,112 +1,92 @@
 # encoding=utf8
 import requests
+import os
 import json
-import time
-import datetime
-import pytz
-import re
-import sys
-import argparse
-from bs4 import BeautifulSoup
+
+os.environ['NO_PROXY'] = 'jzsz.uestc.edu.cn'
+
 
 class Report(object):
-    def __init__(self, stuid, password, data_path):
-        self.stuid = stuid
-        self.password = password
-        self.data_path = data_path
-
-    def report(self):
-        loginsuccess = False
-        retrycount = 5
-        while (not loginsuccess) and retrycount:
-            session = self.login()
-            cookies = session.cookies
-            getform = session.get("http://weixine.ustc.edu.cn/2020")
-            retrycount = retrycount - 1
-            if getform.url != "https://weixine.ustc.edu.cn/2020/home":
-                print("Login Failed! Retry...")
-            else:
-                print("Login Successful!")
-                loginsuccess = True
-        if not loginsuccess:
-            return False
-        data = getform.text
-        data = data.encode('ascii','ignore').decode('utf-8','ignore')
-        soup = BeautifulSoup(data, 'html.parser')
-        token = soup.find("input", {"name": "_token"})['value']
-
-        with open(self.data_path, "r+") as f:
-            data = f.read()
-            data = json.loads(data)
-            data["_token"]=token
-
-        headers = {
-            'authority': 'weixine.ustc.edu.cn',
-            'origin': 'http://weixine.ustc.edu.cn',
-            'upgrade-insecure-requests': '1',
-            'content-type': 'application/x-www-form-urlencoded',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.100 Safari/537.36',
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'referer': 'http://weixine.ustc.edu.cn/2020/',
-            'accept-language': 'zh-CN,zh;q=0.9',
-            'Connection': 'close',
-            'cookie': 'PHPSESSID=' + cookies.get("PHPSESSID") + ";XSRF-TOKEN=" + cookies.get("XSRF-TOKEN") + ";laravel_session="+cookies.get("laravel_session"),
+    def __init__(self):
+        self.session = requests.Session()
+        self.baseUrl = "https://jzsz.uestc.edu.cn"
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/53.0.2785.143 Safari/537.36 MicroMessenger/7.0.9.501 NetType/WIFI "
+                          "MiniProgramEnv/Windows WindowsWechat",
+            "X-Tag": "flyio",
+            "content-type": "application/json",
+            "encode": "false",
+            "Referer": "https://servicewechat.com/wx521c0c16b77041a0/28/page-frame.html"  # 小程序的 id
         }
-
-        url = "http://weixine.ustc.edu.cn/2020/daliy_report"
-        session.post(url, data=data, headers=headers)
-        data = session.get("http://weixine.ustc.edu.cn/2020").text
-        soup = BeautifulSoup(data, 'html.parser')
-        pattern = re.compile("2020-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}")
-        token = soup.find(
-            "span", {"style": "position: relative; top: 5px; color: #666;"})
-        flag = False
-        if pattern.search(token.text) is not None:
-            date = pattern.search(token.text).group()
-            print("Latest report: " + date)
-            date = date + " +0800"
-            reporttime = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S %z")
-            timenow = datetime.datetime.now(pytz.timezone('Asia/Shanghai'))
-            delta = timenow - reporttime
-            print("{} second(s) before.".format(delta.seconds))
-            if delta.seconds < 120:
-                flag = True
-        if flag == False:
-            print("Report FAILED!")
+        # 读取配置文件
+        with open('config.json', 'r') as config_file:
+            self.data = json.load(config_file)
+        # 确认坐标
+        self.location = self.data.pop('location', 'qingshuihe')
+        if self.location == 'qingshuihe':
+            pass
+        elif self.location == 'shahe':
+            raise NotImplementedError
         else:
-            print("Report SUCCESSFUL!")
-        return flag
+            raise ValueError(f'location 参数错误: {self.location}')
 
-    def login(self):
-        url = "https://passport.ustc.edu.cn/login?service=http%3A%2F%2Fweixine.ustc.edu.cn%2F2020%2Fcaslogin"
-        data = {
-            'model': 'uplogin.jsp',
-            'service': 'http://weixine.ustc.edu.cn/2020/caslogin',
-            'username': self.stuid,
-            'password': str(self.password),
-        }
-        session = requests.Session()
-        session.post(url, data=data)
+    # 登陆/绑定
+    def login(self) -> bool:
+        response_checkbind = self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/checkBind", json={},
+                                               headers=self.headers)  # 获取 SESSION，否则登录不上
+        response_login = self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/bindUserInfo", json=self.data,
+                                           headers=self.headers)  # 登录，并将 SESSION ID 和用户绑定
+        # 输出 SESSION ID。要是忘记解绑，小程序无法登陆，就得拿 SESSION ID 解绑
+        if response_login.json()['code'] == 0:
+            session_id = self.session.cookies["SESSION"]
+            print(f'登录成功，session 为 {session_id}，请妥善保管！')
+            return True
+        else:
+            print(f'登录失败，response 为 {response_login.json()}')
+            return False
 
-        print("login...")
-        return session
+    # 打卡
+    def report(self) -> bool:
+        return True
+
+    # 注销/解绑
+    # 每次打完卡都必须解绑 session_id 和账户，否则下次登录不上
+    def logout(self) -> bool:
+        response_logout = self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/cancelBind")
+        response_logout.json()
+        if response_logout.json()['code'] == 0:
+            print(f'注销成功，session 已失效')
+            return True
+        else:
+            print(f'注销失败，response 为 {response_logout.json()}')
+            return False
+
+    def run(self) -> bool:
+        ret = True
+        try:
+            if not self.login() or not self.report():
+                ret = False
+            if not self.logout():
+                ret = False
+        except:
+            ret = False
+        return ret
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='URC nCov auto report script.')
-    parser.add_argument('data_path', help='path to your own data used for post method', type=str)
-    parser.add_argument('stuid', help='your student number', type=str)
-    parser.add_argument('password', help='your CAS password', type=str)
-    args = parser.parse_args()
-    autorepoter = Report(stuid=args.stuid, password=args.password, data_path=args.data_path)
+    auto_reporter = Report()
     count = 5
     while count != 0:
-        ret = autorepoter.report()
-        if ret != False:
+        ret = auto_reporter.run()
+        if ret:
             break
-        print("Report Failed, retry...")
+        print("打卡失败，重试中...\n")
         count = count - 1
+
     if count != 0:
+        print('打卡成功')
         exit(0)
     else:
+        print('打卡失败，退出程序')
         exit(-1)
