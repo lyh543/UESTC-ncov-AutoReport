@@ -1,7 +1,7 @@
 {
     "sn": "学号",
     "idCard": "身份证后六位",
-    "avatarurl": "（选填）",
-    "nickname": "（选填）",
-    "location": "qingshuihe or shahe"
+    "avatarurl": "头像链接（选填）",
+    "nickname": "微信昵称（选填）",
+    "location": "四川省郫都区S9"
 }
