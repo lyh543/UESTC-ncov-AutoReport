@@ -33,9 +33,12 @@ class Report(object):
                           headers=self.headers)  # 获取 SESSION，否则登录不上
         response = self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/bindUserInfo", json=self.data,
                                            headers=self.headers)  # 登录，并将 SESSION ID 和用户绑定
-        # 输出 SESSION ID。要是忘记解绑，小程序无法登陆，就得拿 SESSION ID 解绑
         if response.json()['code'] == 0:
             session_id = self.session.cookies["SESSION"]
+            # set-cookie 给的 key 是 SESSION，但是之后的请求的 cookie 的 key 需要使用 JSESSIONID
+            self.session.cookies['JSESSIONID'] = session_id
+            del self.session.cookies['SESSION']
+            # 输出 SESSION ID。要是忘记解绑，小程序无法登陆，就得拿 SESSION ID 解绑
             print(f'登录成功，session 为 {session_id}，请妥善保管！')
             return True
         else:

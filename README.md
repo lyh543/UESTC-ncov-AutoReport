@@ -68,7 +68,7 @@ python report.py
 ```py
 from report import Report
 auto_report = Report()
-auto_report.session.cookies['SESSION'] = 'Your Session id'
+auto_report.session.cookies['JSESSIONID'] = 'Your Session id'
 auto_report.logout()
 ```
 
