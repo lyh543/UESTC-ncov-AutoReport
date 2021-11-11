@@ -65,6 +65,7 @@ class Report(object):
     # 校内打卡
     def report_in_school(self) -> bool:
         data = {
+            "healthColor": "绿色",
             "healthCondition":"正常",
             "todayMorningTemperature":"36°C~36.5°C",
             "yesterdayEveningTemperature":"36°C~36.5°C",
