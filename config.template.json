@@ -3,5 +3,9 @@
     "idCard": "身份证后六位",
     "avatarurl": "头像链接（选填）",
     "nickname": "微信昵称（选填）",
-    "location": "四川省郫都区S9"
+    "location": "四川省郫都区S9",
+    "homeProvince": "四川省",
+    "homeCity": "成都市",
+    "homeCounty": "金牛区",
+    "homeLocation": "四川省成都市金牛区西华大道"
 }

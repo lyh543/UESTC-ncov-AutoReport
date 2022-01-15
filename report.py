@@ -24,15 +24,20 @@ class Report(object):
         # 读取配置文件
         with open('config.json', 'r', encoding='utf-8') as config_file:
             self.data = json.load(config_file)
-        # 确认坐标
+        # 校内坐标
         self.location = self.data.pop('location', '')
+        # 校外坐标
+        self.homeProvince = self.data.pop('homeProvince', '')
+        self.homeCity = self.data.pop('homeCity', '')
+        self.homeCounty = self.data.pop('homeCounty', '')
+        self.homeLocation = self.data.pop('homeLocation', '')
 
     # 登陆/绑定
     def login(self) -> bool:
-        self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/checkBind", json={}, 
+        self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/checkBind", json={},
                           headers=self.headers)  # 获取 SESSION，否则登录不上
         response = self.session.post(self.baseUrl + "/wxvacation/api/epidemic/login/bindUserInfo", json=self.data,
-                                           headers=self.headers)  # 登录，并将 SESSION ID 和用户绑定
+                                     headers=self.headers)  # 登录，并将 SESSION ID 和用户绑定
         if response.json()['code'] == 0:
             session_id = self.session.cookies["SESSION"]
             # set-cookie 给的 key 是 SESSION，但是之后的请求的 cookie 的 key 需要使用 JSESSIONID
@@ -57,24 +62,63 @@ class Report(object):
             print('今日已打卡，跳过打卡')
             return True
         print('今日未打卡，开始打卡...')
-        if response.json()['data']['schoolStatus'] == 1:    # 在校
+        if response.json()['data']['schoolStatus'] == 1:  # 在校
             return self.report_in_school()
         else:
-            raise NotImplementedError('暂未实现校外打卡')
+            return self.report_in_home()
 
     # 校内打卡
     def report_in_school(self) -> bool:
+        if self.location == '':
+            raise 'config 中 location 为空'
+
         data = {
             "healthColor": "绿色",
-            "healthCondition":"正常",
-            "todayMorningTemperature":"36°C~36.5°C",
-            "yesterdayEveningTemperature":"36°C~36.5°C",
-            "yesterdayMiddayTemperature":"36°C~36.5°C",
-            "location":self.location
+            "healthCondition": "正常",
+            "todayMorningTemperature": "36°C~36.5°C",
+            "yesterdayEveningTemperature": "36°C~36.5°C",
+            "yesterdayMiddayTemperature": "36°C~36.5°C",
+            "location": self.location
         }
-        response = self.session.post(self.baseUrl + "/wxvacation/monitorRegisterForReturned", json=data, headers=self.headers)
+        response = self.session.post(self.baseUrl + "/wxvacation/monitorRegisterForReturned", json=data,
+                                     headers=self.headers)
         if response.json()['code'] == 0:
             print(f'校内打卡成功，“请明日 10:00 之前继续填写~”')
+            return True
+        else:
+            print(f'校内打卡失败，response 为 {response.json()}')
+            return False
+
+    # 校外打卡
+    def report_in_home(self) -> bool:
+        if self.homeLocation == '':
+            raise 'config 中 homeLocation 为空'
+        if self.homeProvince == '':
+            raise 'config 中 homeProvince 为空'
+        if self.homeCity == '':
+            raise 'config 中 homeCity 为空'
+        if self.homeCounty == '':
+            raise 'config 中 homeCounty 为空'
+
+        data = {
+            "healthColor": "绿色",
+            "healthInfo": "正常",
+            "currentAddress": self.homeLocation,
+            "province": self.homeProvince,
+            "city": self.homeCity,
+            "county": self.homeCounty,
+            "isInSchool": 0,
+            "isLeaveChengdu": 0 if self.homeCity == '成都市' else 1,
+            "isContactWuhan": 0,
+            "temperature": "36°C~36.5°C",
+            "isSymptom": 0,
+            "isFever": 0,
+            "remark": "",
+        }
+        response = self.session.post(self.baseUrl + "/wxvacation/api/epidemic/monitorRegister", json=data,
+                                     headers=self.headers)
+        if response.json()['code'] == 0:
+            print(f'校外打卡成功，“请明日 10:00 之前继续填写~”')
             return True
         else:
             print(f'校外打卡失败，response 为 {response.json()}')
