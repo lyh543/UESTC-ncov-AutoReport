@@ -1,5 +1,7 @@
 # UESTC 健康打卡平台自动打卡脚本
 
+**由于学校关闭了打卡小程序账号+密码的登录方式，改为统一使用 https://idas.uestc.edu.cn/ 认证，原有的打卡脚本失效。**
+
 [![Auto-report action](https://github.com/lyh543/UESTC-ncov-AutoReport/actions/workflows/report.yml/badge.svg)](https://github.com/lyh543/UESTC-ncov-AutoReport/actions/workflows/report.yml)
 ![Language](https://img.shields.io/badge/Python-3.9-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
